@@ -8,7 +8,7 @@ env:
 
 jobs:
   build-re2-tdb66:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
@@ -18,27 +18,22 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Check Build Tools
+      - name: Check Visual Studio
         shell: pwsh
         run: |
-          Write-Host "Checking compiler..."
-          cl
-          Write-Host "Checking Ninja..."
-          ninja --version
-          Write-Host "Checking CMake..."
-          cmake --version
+          Write-Host "Checking Visual Studio / MSBuild..."
+          msbuild -version
 
       - name: Configure CMake
         run: >
           cmake
           -S ${{ github.workspace }}
           -B ${{ github.workspace }}/build
-          -G Ninja
+          -G "Visual Studio 17 2022"
+          -A x64
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
           -DDEVELOPER_MODE=ON
           "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
