@@ -18,20 +18,45 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Check Build Tools
+        shell: pwsh
+        run: |
+          Write-Host "Checking compiler..."
+          cl
+          Write-Host "Checking Ninja..."
+          ninja --version
+          Write-Host "Checking CMake..."
+          cmake --version
 
       - name: Configure CMake
-        run: cmake -S ${{ github.workspace }} -B ${{ github.workspace }}/build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DDEVELOPER_MODE=ON "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+        run: >
+          cmake
+          -S ${{ github.workspace }}
+          -B ${{ github.workspace }}/build
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          -DDEVELOPER_MODE=ON
+          "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 
       - name: Build RE2_TDB66
-        run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }} --target RE2_TDB66
+        run: >
+          cmake
+          --build ${{ github.workspace }}/build
+          --config ${{ env.BUILD_TYPE }}
+          --target RE2_TDB66
+          --parallel
 
       - name: Package
         shell: pwsh
         run: |
           echo "${{ github.sha }}" > reframework_revision.txt
           echo "none" > DELETE_OPENVR_API_DLL_IF_YOU_WANT_TO_USE_OPENXR
+
           7z a RE2_TDB66.zip reframework_revision.txt
           7z a RE2_TDB66.zip DELETE_OPENVR_API_DLL_IF_YOU_WANT_TO_USE_OPENXR
           7z a RE2_TDB66.zip build/bin/RE2_TDB66/dinput8.dll
